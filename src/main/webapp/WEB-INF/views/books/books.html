@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" xmlns:th="http://thymeleaf.org">
+  <title>All books</title>
+</head>
+<body>
+<div th:each="book : ${books}">
+  <a th:href="@{/books/{id}(id=${book.getId()})}" th:text="${book.getName()}">BOOK</a>
+</div>
+
+<hr/>
+<br/>
+
+<div>
+  <a href="/books/new">Add new book</a>
+</div>
+
+<br/><br/>
+
+<div>
+  <a href="/">MAIN PAGE</a>
+</div>
+
+</body>
+</html>

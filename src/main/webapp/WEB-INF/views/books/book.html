@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/html">
+<head>
+    <meta charset="UTF-8">
+    <title>Book</title>
+</head>
+<body>
+<div>
+    <p th:text="'ID: ' + ${book.getId()}">ID</p>
+    <p th:text="'Name: ' + ${book.getName()}">NAME</p>
+    <p th:text="'Author: ' + ${book.getAuthor()}">AUTHOR</p>
+    <p th:text="'Year: ' + ${book.getYear()}">YEAR</p>
+</div>
+
+<hr/>
+
+<div>
+    <a th:href="@{/books/{id}/edit(id=${book.getId()})}">Edit book</a>
+</div>
+
+<br/>
+
+<div th:if="${book.getUser_id() != 0}">
+    <th:block th:each="user : ${users}">
+        <th:block th:if="${user.getId() == book.getUser_id()}">
+            <p th:text="'This book has been taken by: ' + ${user.getName()} + ' ' + ${user.getSurname()}"></p>
+        </th:block>
+    </th:block>
+
+    <form th:method="PATCH" th:action="@{/books/{id}/free(id=${book.getId()})}">
+        <input type="submit" value="Free book!">
+    </form>
+</div>
+
+<div th:if="${book.getUser_id() == 0}">
+    <form th:method="PATCH" th:action="@{/books/{id}/set(id=${book.getId()})}">
+        <label for="usersList">This book is free. Select user: </label>
+        <select th:object="${bookUser}" th:field="*{id}" id="usersList">
+            <option th:each="user : ${users}" th:value="${user.getId()}" th:text="${user.getName()} + ' ' + ${user.getSurname()}"></option>
+        </select>
+        <input type="submit" value="Set book"/>
+    </form>
+</div>
+
+<br/>
+
+<form th:method="DELETE">
+    <input type="submit" value="Delete book!">
+</form>
+
+</body>
+</html>
