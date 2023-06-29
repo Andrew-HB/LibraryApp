@@ -1,9 +1,12 @@
 package ua.andre.libraryapp.controllers;
 
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
+import ua.andre.libraryapp.dao.BooksDAO;
 import ua.andre.libraryapp.dao.UsersDAO;
 import ua.andre.libraryapp.models.User;
 
@@ -12,10 +15,12 @@ import ua.andre.libraryapp.models.User;
 public class UsersController {
 
     private final UsersDAO usersDAO;
+    private final BooksDAO booksDAO;
 
     @Autowired
-    public UsersController(UsersDAO usersDAO) {
+    public UsersController(UsersDAO usersDAO, BooksDAO booksDAO) {
         this.usersDAO = usersDAO;
+        this.booksDAO = booksDAO;
     }
 
     @GetMapping()
@@ -27,6 +32,9 @@ public class UsersController {
     @GetMapping("/{id}")
     public String usersById (@PathVariable("id") int id, Model model) {
         model.addAttribute("user", usersDAO.getById(id));
+
+        model.addAttribute("allUserBooks", booksDAO.getAllBookByUserId(id));
+
         return "users/user";
     }
 
@@ -37,7 +45,10 @@ public class UsersController {
     }
 
     @PatchMapping("/{id}")
-    public String updateUser (@PathVariable("id") int id, @ModelAttribute("user") User user) {
+    public String updateUser (@PathVariable("id") int id, @Valid @ModelAttribute("user")User user, BindingResult bindingResult) {
+        if(bindingResult.hasErrors())
+            return "users/edit";
+
         usersDAO.updateUser(id, user);
         return "redirect:/users";
     }
@@ -50,7 +61,12 @@ public class UsersController {
     }
 
     @PostMapping()
-    public String createUser(@ModelAttribute("user") User user) {
+    public String createUser(@Valid @ModelAttribute("user") User user, BindingResult bindingResult) {
+        if(bindingResult.hasErrors()) {
+
+            return "users/new";
+        }
+
         usersDAO.createUser(user);
 
         return "redirect:/users";
