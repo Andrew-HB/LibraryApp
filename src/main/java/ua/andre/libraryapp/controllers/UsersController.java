@@ -45,7 +45,7 @@ public class UsersController {
     }
 
     @PatchMapping("/{id}")
-    public String updateUser (@PathVariable("id") int id, @Valid @ModelAttribute("user")User user, BindingResult bindingResult) {
+    public String updateUser (@PathVariable("id") int id, @Valid @ModelAttribute("user") User user, BindingResult bindingResult) {
         if(bindingResult.hasErrors())
             return "users/edit";
 

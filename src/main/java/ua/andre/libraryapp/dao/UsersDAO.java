@@ -1,131 +1,67 @@
 package ua.andre.libraryapp.dao;
 
+import org.hibernate.Session;
+import org.hibernate.SessionFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 import ua.andre.libraryapp.models.User;
 
 import java.sql.*;
-import java.util.ArrayList;
 import java.util.List;
 
 @Component
 public class UsersDAO {
 
-    private static final String URL = "jdbc:postgresql://localhost:5432/library_db";
-    private static final String USER = "postgres";
-    private static final String PASSWORD = "postgres";
+    private final SessionFactory sessionFactory;
 
-    private static Connection connection;
-
-    static {
-        try {
-            Class.forName("org.postgresql.Driver");
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
-        }
-
-        try {
-            connection = DriverManager.getConnection(URL, USER, PASSWORD);
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+    @Autowired
+    public UsersDAO(SessionFactory sessionFactory) {
+        this.sessionFactory = sessionFactory;
     }
 
+    @Transactional
     public List<User> getAll() {
-        List<User> list = new ArrayList<>();
+        Session session = sessionFactory.getCurrentSession();
 
-        try {
-            Statement statement = connection.createStatement();
-            ResultSet resultSet = statement.executeQuery("SELECT * FROM \"user\";");
-
-            while(resultSet.next()) {
-                list.add(new User(
-                        resultSet.getInt("id"),
-                        resultSet.getString("name"),
-                        resultSet.getString("surname"),
-                        resultSet.getInt("age")
-                ));
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+        List<User> list = session.createQuery("select p from User p", User.class).getResultList();
 
         return list;
     }
 
+    @Transactional
     public User getById(int id) {
-        User user = null;
+        Session session = sessionFactory.getCurrentSession();
 
-        try {
-            PreparedStatement preparedStatement = connection.prepareStatement(
-                    "SELECT * FROM \"user\" WHERE id=?;"
-            );
-            preparedStatement.setInt(1, id);
-
-            ResultSet resultSet = preparedStatement.executeQuery();
-
-            resultSet.next();
-            user = new User(
-                    resultSet.getInt("id"),
-                    resultSet.getString("name"),
-                    resultSet.getString("surname"),
-                    resultSet.getInt("age")
-            );
-
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+        User user = session.get(User.class, id);
 
         return user;
-        //return db.stream().filter(user -> user.getId() == id).findAny().orElse(null);
     }
 
+    @Transactional
     public void updateUser(int id, User user) {
-        try {
-            PreparedStatement preparedStatement = connection.prepareStatement(
-                    "UPDATE \"user\" SET \"name\"=?, surname=?, age=? WHERE id=?"
-            );
+        Session session = sessionFactory.getCurrentSession();
 
-            preparedStatement.setString(1, user.getName());
-            preparedStatement.setString(2, user.getSurname());
-            preparedStatement.setInt(3, user.getAge());
-            preparedStatement.setInt(4, id);
+        User userToUpdate = session.get(User.class, id);
 
-            preparedStatement.executeUpdate();
-
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+        userToUpdate.setName(user.getName());
+        userToUpdate.setSurname(user.getSurname());
+        userToUpdate.setAge(user.getAge());
     }
 
+    @Transactional
     public void createUser(User user) {
-        try {
-            PreparedStatement preparedStatement = connection.prepareStatement(
-                    "INSERT INTO \"user\"(\"name\", surname, age) VALUES (?, ?, ?)"
-            );
+        Session session = sessionFactory.getCurrentSession();
 
-            preparedStatement.setString(1, user.getName());
-            preparedStatement.setString(2, user.getSurname());
-            preparedStatement.setInt(3, user.getAge());
-
-            preparedStatement.executeUpdate();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+        session.save(user);
     }
 
+    @Transactional
     public void deleteUser(int id) {
-        PreparedStatement preparedStatement = null;
-        try {
-            preparedStatement = connection.prepareStatement(
-                    "DELETE FROM \"user\" WHERE id=?"
-            );
+        Session session = sessionFactory.getCurrentSession();
 
-            preparedStatement.setInt(1, id);
+        User user = session.get(User.class, id);
 
-            preparedStatement.executeUpdate();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-
+        session.delete(user);
     }
 }

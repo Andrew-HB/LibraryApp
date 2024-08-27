@@ -20,6 +20,12 @@
 
 <br/>
 
+<form th:method="DELETE">
+    <input type="submit" value="Delete book!">
+</form>
+
+<br/>
+
 <div th:if="${book.getUser_id() != 0}">
     <th:block th:each="user : ${users}">
         <th:block th:if="${user.getId() == book.getUser_id()}">
@@ -44,9 +50,6 @@
 
 <br/>
 
-<form th:method="DELETE">
-    <input type="submit" value="Delete book!">
-</form>
 
 </body>
 </html>

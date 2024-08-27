@@ -1,192 +1,103 @@
 package ua.andre.libraryapp.dao;
 
+import org.hibernate.Session;
+import org.hibernate.SessionFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 import ua.andre.libraryapp.models.Book;
+import ua.andre.libraryapp.models.User;
 
-import java.sql.*;
-import java.util.ArrayList;
 import java.util.List;
 
 @Component
 public class BooksDAO {
 
-    private static final String URL = "jdbc:postgresql://localhost:5432/library_db";
-    private static final String USER = "postgres";
-    private static final String PASSWORD = "postgres";
+    private final SessionFactory sessionFactory;
 
-    private static Connection connection;
-
-    static {
-        try {
-            Class.forName("org.postgresql.Driver");
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
-        }
-
-        try {
-            connection = DriverManager.getConnection(URL, USER, PASSWORD);
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+    @Autowired
+    public BooksDAO(SessionFactory sessionFactory) {
+        this.sessionFactory = sessionFactory;
     }
 
+    @Transactional
     public List<Book> getAll() {
-        List<Book> list = new ArrayList<>();
+        Session session = sessionFactory.getCurrentSession();
 
-        try {
-            Statement statement = connection.createStatement();
-            ResultSet resultSet = statement.executeQuery("SELECT * FROM book;");
+        List<Book> list = session.createQuery("select b from Book b", Book.class).getResultList();
+        //session.createQuery("select p from User p", User.class);
 
-            while(resultSet.next()) {
-                list.add(new Book(
-                        resultSet.getInt("id"),
-                        resultSet.getInt("user_id"),
-                        resultSet.getString("name"),
-                        resultSet.getString("author"),
-                        resultSet.getString("year")
-                ));
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
         return list;
     }
 
+    @Transactional
     public Book getById(int id) {
-        Book book = null;
+        Session session = sessionFactory.getCurrentSession();
 
-        try {
-            PreparedStatement preparedStatement = connection.prepareStatement(
-                    "SELECT * FROM book WHERE id=?;"
-            );
-
-            preparedStatement.setInt(1, id);
-
-            ResultSet resultSet = preparedStatement.executeQuery();
-
-            resultSet.next();
-
-            book = new Book(
-                    resultSet.getInt("id"),
-                    resultSet.getInt("user_id"),
-                    resultSet.getString("name"),
-                    resultSet.getString("author"),
-                    resultSet.getString("year")
-            );
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+        Book book = session.get(Book.class, id);
 
         return book;
     }
 
+    @Transactional
     public void updateBook(int id, Book book) {
-        try {
-            PreparedStatement preparedStatement = connection.prepareStatement(
-                    "UPDATE book SET \"name\"=?, author=?, \"year\"=? WHERE id=?;"
-            );
+        Session session = sessionFactory.getCurrentSession();
 
-            preparedStatement.setString(1, book.getName());
-            preparedStatement.setString(2, book.getAuthor());
-            preparedStatement.setString(3, book.getYear());
-            preparedStatement.setInt(4, id);
+        Book bookToUpdate = session.get(Book.class, id);
 
-            preparedStatement.executeUpdate();
-
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+        bookToUpdate.setId(book.getId());
+        bookToUpdate.setName(book.getName());
+        bookToUpdate.setAuthor(book.getAuthor());
+        bookToUpdate.setYear(book.getYear());
+        bookToUpdate.setOwner(book.getOwner());
     }
 
+    @Transactional
     public void createBook(Book book) {
-        try {
-            PreparedStatement preparedStatement = connection.prepareStatement(
-                    "INSERT INTO book(\"name\", author, \"year\") VALUES (?, ?, ?);"
-            );
+        Session session = sessionFactory.getCurrentSession();
 
-            preparedStatement.setString(1, book.getName());
-            preparedStatement.setString(2, book.getAuthor());
-            preparedStatement.setString(3, book.getYear());
-
-            preparedStatement.executeUpdate();
-
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+        session.save(book);
     }
 
+    @Transactional
     public void deleteBook(int id) {
-        try {
-            PreparedStatement preparedStatement = connection.prepareStatement(
-                    "DELETE FROM book WHERE id=?;"
-            );
+        Session session = sessionFactory.getCurrentSession();
 
-            preparedStatement.setInt(1, id);
+        Book book = session.get(Book.class, id);
 
-            preparedStatement.executeUpdate();
-
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+        session.delete(book);
     }
 
+    @Transactional
     public void setBook(int book_id, int user_id) {
-        try {
-            PreparedStatement preparedStatement = connection.prepareStatement(
-                    "UPDATE book SET user_id=? WHERE id=?;"
-            );
+        Session session = sessionFactory.getCurrentSession();
 
-            preparedStatement.setInt(1, user_id);
-            preparedStatement.setInt(2, book_id);
+        Book book = session.get(Book.class, book_id);
+        User user = session.get(User.class, user_id);
 
-            preparedStatement.executeUpdate();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+        book.setOwner(user);
+
     }
 
+    @Transactional
     public void freeBook(int book_id) {
-        try {
-            PreparedStatement preparedStatement = connection.prepareStatement(
-                    "UPDATE book SET user_id=null WHERE id=?;"
-            );
+        Session session = sessionFactory.getCurrentSession();
 
-            preparedStatement.setInt(1, book_id);
+        Book book = session.get(Book.class, book_id);
 
-            preparedStatement.executeUpdate();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+        book.setOwner(null);
+
     }
 
+    @Transactional
     public List<Book> getAllBookByUserId(int user_id) {
-        List<Book> list = null;
 
-        try {
-            PreparedStatement preparedStatement = connection.prepareStatement(
-                    "SELECT * FROM book WHERE user_id=?;"
-            );
+        Session session = sessionFactory.getCurrentSession();
 
-            preparedStatement.setInt(1, user_id);
-
-            ResultSet resultSet = preparedStatement.executeQuery();
-
-            list = new ArrayList<>();
-
-            while (resultSet.next()) {
-                list.add(new Book(
-                        resultSet.getInt("id"),
-                        resultSet.getInt("user_id"),
-                        resultSet.getString("name"),
-                        resultSet.getString("author"),
-                        resultSet.getString("year")
-                ));
-            }
-
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-
+        User user = session.get(User.class, user_id);
+        System.out.println(user);
+        List<Book> list = user.getBooks();
+        //System.out.println(list);
         return list;
     }
 }
