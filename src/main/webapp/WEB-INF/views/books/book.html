@@ -20,15 +20,9 @@
 
 <br/>
 
-<form th:method="DELETE">
-    <input type="submit" value="Delete book!">
-</form>
-
-<br/>
-
-<div th:if="${book.getUser_id() != 0}">
+<div th:if="${book.owner != null}">
     <th:block th:each="user : ${users}">
-        <th:block th:if="${user.getId() == book.getUser_id()}">
+        <th:block th:if="${user.getId() == book.owner.getId()}">
             <p th:text="'This book has been taken by: ' + ${user.getName()} + ' ' + ${user.getSurname()}"></p>
         </th:block>
     </th:block>
@@ -38,7 +32,7 @@
     </form>
 </div>
 
-<div th:if="${book.getUser_id() == 0}">
+<div th:if="${book.owner == null}">
     <form th:method="PATCH" th:action="@{/books/{id}/set(id=${book.getId()})}">
         <label for="usersList">This book is free. Select user: </label>
         <select th:object="${bookUser}" th:field="*{id}" id="usersList">
@@ -50,6 +44,11 @@
 
 <br/>
 
+<form th:method="DELETE">
+    <input type="submit" value="Delete book!">
+</form>
+
+<br/>
 
 </body>
 </html>
