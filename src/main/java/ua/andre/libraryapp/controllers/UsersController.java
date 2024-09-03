@@ -6,41 +6,41 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
-import ua.andre.libraryapp.dao.BooksDAO;
-import ua.andre.libraryapp.dao.UsersDAO;
 import ua.andre.libraryapp.models.User;
+import ua.andre.libraryapp.services.BookService;
+import ua.andre.libraryapp.services.UserService;
 
 @Controller
 @RequestMapping("/users")
 public class UsersController {
 
-    private final UsersDAO usersDAO;
-    private final BooksDAO booksDAO;
+    private final UserService userService;
+    private final BookService bookService;
 
     @Autowired
-    public UsersController(UsersDAO usersDAO, BooksDAO booksDAO) {
-        this.usersDAO = usersDAO;
-        this.booksDAO = booksDAO;
+    public UsersController(UserService userService, BookService bookService) {
+        this.userService = userService;
+        this.bookService = bookService;
     }
 
     @GetMapping()
     public String allUsers(Model model) {
-        model.addAttribute("users", usersDAO.getAll());
+        model.addAttribute("users", userService.findAll());
         return "users/users";
     }
 
     @GetMapping("/{id}")
     public String usersById (@PathVariable("id") int id, Model model) {
-        model.addAttribute("user", usersDAO.getById(id));
+        model.addAttribute("user", userService.findById(id));
 
-        model.addAttribute("allUserBooks", booksDAO.getAllBookByUserId(id));
+        model.addAttribute("allUserBooks", bookService.findAllBookByUserId(id));
 
         return "users/user";
     }
 
     @GetMapping("/{id}/edit")
     public String editUser (@PathVariable("id") int id, Model model) {
-        model.addAttribute("user", usersDAO.getById(id));
+        model.addAttribute("user", userService.findById(id));
         return "users/edit";
     }
 
@@ -49,7 +49,7 @@ public class UsersController {
         if(bindingResult.hasErrors())
             return "users/edit";
 
-        usersDAO.updateUser(id, user);
+        userService.update(id, user);
         return "redirect:/users";
     }
 
@@ -67,14 +67,14 @@ public class UsersController {
             return "users/new";
         }
 
-        usersDAO.createUser(user);
+        userService.save(user);
 
         return "redirect:/users";
     }
 
     @DeleteMapping("/{id}")
     public String deleteUser(@PathVariable("id") int id) {
-        usersDAO.deleteUser(id);
+        userService.delete(id);
 
         return "redirect:/users";
     }
